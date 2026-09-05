@@ -3,10 +3,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Arial;background:#f3f0e8;color:#17342d}header{background:#123b31;color:#fff;padding:32px 18px 52px}header div,.wrap{max-width:900px;margin:auto}h1{margin:4px 0;font-size:36px}.sub{opacity:.72}.wrap{padding:0 14px 60px;margin-top:-28px}.card{background:#fffdf8;border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 12px 32px #17342d18}.hidden{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.wide{grid-column:1/-1}label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;color:#72817c;margin:0 0 5px}input,select,textarea{width:100%;padding:13px;border:1px solid #dce4df;border-radius:13px;background:white;font:inherit}textarea{min-height:75px}.btn{border:0;border-radius:13px;padding:12px 15px;background:#174d40;color:#fff;font-weight:800}.light{background:#edf3f0;color:#174d40}.danger{background:#f8e9e7;color:#9c3535}.upload{border:2px dashed #a8bbb4;border-radius:17px;padding:17px;text-align:center;background:#f7faf8}.scanstatus{margin-top:10px;padding:10px;border-radius:12px;background:#edf3f0;font-size:13px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{background:#eff4f1;padding:11px;border-radius:14px}.stat b{display:block}.stat small,.meta{color:#71817b}.toolbar{display:grid;grid-template-columns:1fr 190px;gap:8px}.row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:15px 0;border-top:1px solid #e1e6e3}.row h3{margin:0 0 4px;font-size:16px}.meta{font-size:13px;line-height:1.45}.amount{font-weight:900;text-align:right}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.mini{padding:7px 9px;font-size:12px}.empty{text-align:center;color:#71817b;padding:30px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#102e27;color:#fff;padding:11px 15px;border-radius:13px;max-width:90%;z-index:5}.login{max-width:450px;margin:0 auto}@media(max-width:620px){.grid,.toolbar{grid-template-columns:1fr}.wide{grid-column:auto}.row{grid-template-columns:1fr}.amount{text-align:left}}</style></head>
-<body><header><div><small>FERIENHAUS · ALTES LAND</small><h1>Buchs & Brise</h1><div class="sub">Belegarchiv · OCR-Version 3</div></div></header><div class="wrap">
+<body><header><div><small>FERIENHAUS · ALTES LAND</small><h1>Buchs & Brise</h1><div class="sub">Belegarchiv · OCR-Version 4</div></div></header><div class="wrap">
 <section id="login" class="card login"><h2>Anmelden</h2><div class="grid"><div class="wide"><label>E-Mail</label><input id="email" type="email"></div><div class="wide"><label>Passwort</label><input id="password" type="password"></div><button id="loginBtn" class="btn wide">Anmelden</button></div></section>
 <main id="app" class="hidden"><section class="card"><div class="top"><div><b>Neuen Beleg erfassen</b><div class="meta">Fotografieren → Daten werden automatisch erkannt</div></div><button id="logout" class="btn light mini">Abmelden</button></div><form id="form" class="grid" style="margin-top:15px">
-<div class="wide upload"><b>📷 Beleg fotografieren oder Datei auswählen</b><input id="file" type="file" accept="image/jpeg,image/png,application/pdf" capture="environment" required onchange="scanReceipt(this.files[0])"><div id="scanstatus" class="scanstatus hidden"></div></div>
+<div class="wide upload"><b>📷 Beleg fotografieren oder Datei auswählen</b><input id="file" type="file" accept="image/jpeg,image/png,application/pdf" capture="environment" required><div id="scanstatus" class="scanstatus hidden"></div></div>
 <div><label>Belegdatum</label><input id="date" type="date"></div><div><label>Kategorie</label><select id="type"><option>Einrichtung & Möbel</option><option>Reparatur & Instandhaltung</option><option>Strom / Wasser / Heizung</option><option>Reinigung & Wäsche</option><option>Garten & Außenbereich</option><option>Versicherung</option><option>Internet & Telefon</option><option>Vermietungsplattform / Gebühren</option><option>Werbung & Website</option><option>Fahrt- / Reisekosten</option><option>Anschaffung / Anlagegut</option><option selected>Sonstiger Beleg</option></select></div><div><label>Firma / Händler</label><input id="vendor"></div><div><label>Brutto €</label><input id="gross" inputmode="decimal" placeholder="0,00"></div><div><label>MwSt. €</label><input id="tax" inputmode="decimal" placeholder="0,00"></div><div class="wide"><label>Notiz</label><textarea id="notes"></textarea></div><button id="save" class="btn wide">Beleg speichern</button></form></section>
 <section class="card"><div class="top"><div><b>Archiv</b><div class="meta">Gemeinsamer Datenbestand auf allen Handys</div></div><button id="refresh" class="btn light mini">↻</button></div><div class="stats"><div class="stat"><b id="count">0</b><small>Belege</small></div><div class="stat"><b id="sum">0,00 €</b><small>Brutto</small></div><div class="stat"><b id="vat">0,00 €</b><small>MwSt.</small></div></div><div class="toolbar"><input id="search" type="search" placeholder="🔎 Suchen …"><select id="filter"><option value="">Alle Kategorien</option></select></div><div class="actions" style="margin:10px 0"><button id="csv" class="btn light mini">CSV exportieren</button></div><div id="list"></div></section></main></div><div id="toast" class="toast hidden"></div>
 <script>
@@ -20,108 +20,87 @@ let amounts=euroCandidates(text),gross='';let totalLine=lines.filter(l=>/(gesamt
 let tax='';let taxLine=lines.filter(l=>/(mwst|ust|umsatzsteuer|mehrwertsteuer|vat)/i.test(l));let taxAmounts=taxLine.flatMap(euroCandidates).filter(x=>!g||x.n<g.n);if(taxAmounts.length)tax=taxAmounts.sort((a,b)=>b.n-a.n)[0].n.toFixed(2).replace('.',',');
 let bad=/^(rechnung|kassenbon|beleg|quittung|datum|filiale|tel|www\.|http|steuer|ust|mwst)/i;let vendor=lines.slice(0,10).find(l=>l.length>2&&l.length<60&&/[A-Za-zÄÖÜäöüß]/.test(l)&&!bad.test(l))||'';vendor=vendor.replace(/[^A-Za-z0-9ÄÖÜäöüß& .,'+\-]/g,' ').replace(/\s+/g,' ').trim();
 let lower=text.toLowerCase(),cat='Sonstiger Beleg';let rules=[['Einrichtung & Möbel',['möbel','ikea','jysk','stuhl','tisch','schrank','bett']],['Reparatur & Instandhaltung',['baumarkt','hornbach','bauhaus','obi','reparatur','werkzeug','farbe','schraube']],['Strom / Wasser / Heizung',['strom','energie','wasser','heizung','gas','brennholz']],['Reinigung & Wäsche',['reinigung','wasch','wäsche','putz','spülmittel']],['Garten & Außenbereich',['garten','pflanze','rasen','erde']],['Versicherung',['versicherung','police','beitrag']],['Internet & Telefon',['telekom','vodafone','internet','telefon']],['Vermietungsplattform / Gebühren',['booking','airbnb','fewo','provision']],['Werbung & Website',['domain','hosting','werbung','website']],['Fahrt- / Reisekosten',['tankstelle','shell','aral','esso','bahn','parkgebühr']],['Anschaffung / Anlagegut',['gerät','maschine','fernseher','kühlschrank','spülmaschine']]];for(let [c,ks] of rules)if(ks.some(k=>lower.includes(k))){cat=c;break}return{date,gross,tax,vendor,cat}}
+$('file').addEventListener('change',async()=>{
+ let f=$('file').files[0]; if(!f)return;
+ let s=$('scanstatus'); s.classList.remove('hidden');
+ if(f.type==='application/pdf'){
+   s.textContent='PDF ausgewählt. Automatische Erkennung ist derzeit für Fotos optimiert; PDF kann gespeichert werden.';
+   return;
+ }
+ try{
+   s.textContent='🔎 Beleg wird gelesen … 0 %';
+   let r=await Tesseract.recognize(f,'deu+eng',{logger:m=>{
+     if(m.status==='recognizing text')s.textContent='🔎 Beleg wird gelesen … '+Math.round((m.progress||0)*100)+' %';
+   }});
+   let raw=(r.data.text||'');
+   let lines=raw.split(/\r?\n/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+   let joined=lines.join('\n');
 
-async function preprocessReceipt(file){
-  const bmp=await createImageBitmap(file);
-  const maxW=1800, scale=Math.min(1,maxW/bmp.width);
-  const c=document.createElement('canvas');
-  c.width=Math.round(bmp.width*scale); c.height=Math.round(bmp.height*scale);
-  const x=c.getContext('2d',{willReadFrequently:true});
-  x.drawImage(bmp,0,0,c.width,c.height);
-  const im=x.getImageData(0,0,c.width,c.height), d=im.data;
-  for(let i=0;i<d.length;i+=4){
-    let g=.299*d[i]+.587*d[i+1]+.114*d[i+2];
-    g=(g-128)*1.65+128; g=Math.max(0,Math.min(255,g));
-    d[i]=d[i+1]=d[i+2]=g;
-  }
-  x.putImageData(im,0,0);
-  return new Promise(res=>c.toBlob(res,'image/jpeg',.92));
-}
-function eur(s){
-  if(!s)return null;
-  s=String(s).replace(/\s/g,'').replace(/[€EUR]/gi,'');
-  if(s.includes(',')&&s.includes('.')){
-    if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
-    else s=s.replace(/,/g,'');
-  } else if(s.includes(',')) s=s.replace(',','.');
-  const n=Number(s.replace(/[^\d.-]/g,''));
-  return Number.isFinite(n)?n:null;
-}
-function smartParseReceipt(raw){
-  const lines=raw.split(/\r?\n/).map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean);
-  const joined=lines.join('\n');
-  let date='';
-  const dm=joined.match(/\b(0?[1-9]|[12]\d|3[01])[.\-\/](0?[1-9]|1[0-2])[.\-\/](20\d{2}|\d{2})\b/);
-  if(dm){let y=dm[3]; if(y.length===2)y='20'+y; date=`${y}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`;}
-  const moneyRx=/(\d{1,4}(?:[.\s]\d{3})*[,.]\d{2})\s*(?:€|EUR)?/gi;
-  const candidates=[];
-  lines.forEach((line,i)=>{
-    let m; while((m=moneyRx.exec(line))){
-      const n=eur(m[1]); if(n!=null && n>=0 && n<100000)candidates.push({n,line,i});
-    }
-  });
-  const totalWords=/(gesamt|summe|endbetrag|zu zahlen|zahlbetrag|rechnungsbetrag|total|brutto|betrag)/i;
-  let gross=null, best=-1;
-  candidates.forEach(c=>{
-    let score=(totalWords.test(c.line)?10:0)+c.i/Math.max(1,lines.length);
-    if(score>best){best=score;gross=c.n;}
-  });
-  if(gross==null && candidates.length) gross=Math.max(...candidates.map(c=>c.n));
+   // Datum: nur plausible deutsche Datumswerte übernehmen
+   let date='';
+   let dm=joined.match(/\b(0?[1-9]|[12]\d|3[01])[.\/-](0?[1-9]|1[0-2])[.\/-](20\d{2}|\d{2})\b/);
+   if(dm){let y=dm[3].length===2?'20'+dm[3]:dm[3]; date=y+'-'+dm[2].padStart(2,'0')+'-'+dm[1].padStart(2,'0');}
 
-  let tax=null;
-  for(const line of lines){
-    if(/(mwst|ust|umsatzsteuer|mehrwertsteuer|vat)/i.test(line)){
-      const vals=[...line.matchAll(moneyRx)].map(m=>eur(m[1])).filter(n=>n!=null);
-      if(vals.length){tax=vals[vals.length-1];break;}
-    }
-  }
-  let vendor='';
-  const junk=/(kassenbon|rechnung|beleg|datum|filiale|tel\.?|www\.|steuer|ust-id|kund|bon-nr|summe|gesamt)/i;
-  for(const line of lines.slice(0,10)){
-    if(line.length>=3 && line.length<=55 && /[A-Za-zÄÖÜäöüß]{3}/.test(line) && !junk.test(line) && !/^\d/.test(line)){
-      vendor=line; break;
-    }
-  }
-  let cat='Sonstiger Beleg', low=joined.toLowerCase();
-  const rules=[
-   ['Einrichtung & Möbel',['ikea','jysk','möbel','bett','stuhl','tisch','matratze']],
-   ['Reparatur & Instandhaltung',['bauhaus','obi','hornbach','werkzeug','farbe','schraube','reparatur']],
-   ['Strom / Wasser / Heizung',['strom','energie','wasser','heizung','gas','brennholz']],
-   ['Reinigung & Wäsche',['reinigung','wasch','wäsche','putz','spülmittel']],
-   ['Garten & Außenbereich',['garten','pflanze','rasen','erde']],
-   ['Versicherung',['versicherung','police','beitrag']],
-   ['Internet & Telefon',['telekom','vodafone','internet','telefon']],
-   ['Vermietungsplattform / Gebühren',['booking','airbnb','fewo','provision']],
-   ['Werbung & Website',['domain','hosting','werbung','website']],
-   ['Fahrt- / Reisekosten',['tankstelle','shell','aral','esso','bahn','parkgebühr']],
-   ['Anschaffung / Anlagegut',['fernseher','kühlschrank','spülmaschine','maschine','gerät']]
-  ];
-  for(const [c,ks] of rules)if(ks.some(k=>low.includes(k))){cat=c;break;}
-  return {date,vendor,gross,tax,cat};
-}
-window.scanReceipt=async function(f){
-  if(!f)return;
-  const s=$('scanstatus'); s.classList.remove('hidden');
-  if(f.type==='application/pdf'){s.textContent='PDF kann gespeichert werden; automatische Erkennung ist derzeit für Fotos optimiert.';return;}
-  try{
-    if(!window.Tesseract)throw new Error('OCR-Bibliothek nicht geladen');
-    s.textContent='🔎 Foto wird für die Erkennung optimiert …';
-    const img=await preprocessReceipt(f);
-    s.textContent='🔎 Beleg wird analysiert …';
-    const r=await Tesseract.recognize(img,'deu+eng',{logger:m=>{
-      if(m.status==='recognizing text')s.textContent='🔎 Beleg wird analysiert … '+Math.round((m.progress||0)*100)+' %';
-    }});
-    const p=smartParseReceipt(r.data.text||'');
-    if(p.date)$('date').value=p.date;
-    if(p.vendor)$('vendor').value=p.vendor;
-    if(p.gross!=null)$('gross').value=p.gross.toFixed(2).replace('.',',');
-    if(p.tax!=null)$('tax').value=p.tax.toFixed(2).replace('.',',');
-    $('type').value=p.cat;
-    const found=[p.vendor?'Händler':'',p.date?'Datum':'',p.gross!=null?'Betrag':'',p.tax!=null?'MwSt.':''].filter(Boolean);
-    s.textContent=found.length>=3?'✓ Beleg erkannt – '+found.join(', ')+' übernommen.':'⚠️ Beleg nur teilweise erkannt ('+(found.join(', ')||'keine sicheren Felder')+'). Unsichere Werte wurden bewusst nicht erfunden.';
-  }catch(e){console.error(e);s.textContent='⚠️ Erkennung fehlgeschlagen: '+e.message;}
-};
-let p=parseReceipt(r.data.text||'');if(p.date)$('date').value=p.date;if(p.vendor)$('vendor').value=p.vendor;if(p.gross)$('gross').value=p.gross;if(p.tax)$('tax').value=p.tax;$('type').value=p.cat;s.textContent='✓ Analyse fertig – Daten wurden automatisch eingetragen. Bitte kurz prüfen.'}catch(e){s.textContent='Erkennung nicht möglich: '+e.message}});
+   // Geldwerte: bevorzugt Zeilen mit Gesamt/Summe/zu zahlen.
+   function num(v){
+     v=v.replace(/\s/g,'').replace(/[€]/g,'');
+     if(v.includes(',')&&v.includes('.'))v=v.lastIndexOf(',')>v.lastIndexOf('.')?v.replace(/\./g,'').replace(',','.'):v.replace(/,/g,'');
+     else v=v.replace(',','.');
+     let n=Number(v.replace(/[^\d.]/g,''));
+     return Number.isFinite(n)?n:null;
+   }
+   let gross=null, tax=null;
+   let money=/(\d{1,5}(?:[.\s]\d{3})*[,.]\d{2})/g;
+   let totalLine=lines.find(x=>/(gesamt|summe|endbetrag|zu zahlen|zahlbetrag|rechnungsbetrag|total|brutto)/i.test(x));
+   if(totalLine){
+     let a=[...totalLine.matchAll(money)].map(x=>num(x[1])).filter(x=>x!==null);
+     if(a.length)gross=a[a.length-1];
+   }
+   let taxLine=lines.find(x=>/(mwst|mehrwertsteuer|umsatzsteuer|\bust\b|\bvat\b)/i.test(x));
+   if(taxLine){
+     let a=[...taxLine.matchAll(money)].map(x=>num(x[1])).filter(x=>x!==null);
+     if(a.length)tax=a[a.length-1];
+   }
+
+   // Händler: nur eine plausible Textzeile aus dem Kopfbereich.
+   let vendor='';
+   let junk=/(kassenbon|rechnung|beleg|datum|filiale|telefon|tel\.|www\.|steuer|ust|kund|bon|summe|gesamt|eur)/i;
+   for(let line of lines.slice(0,9)){
+     if(line.length>=3&&line.length<=50&&/[A-Za-zÄÖÜäöüß]{3}/.test(line)&&!junk.test(line)&&!/^\d/.test(line)){
+       vendor=line; break;
+     }
+   }
+
+   // Kategorie anhand erkannter Begriffe
+   let cat='Sonstiger Beleg', low=joined.toLowerCase();
+   let rules=[
+    ['Einrichtung & Möbel',['ikea','jysk','möbel','bett','stuhl','tisch','matratze']],
+    ['Reparatur & Instandhaltung',['bauhaus','obi','hornbach','reparatur','werkzeug','farbe','schraube']],
+    ['Strom / Wasser / Heizung',['strom','energie','wasser','heizung','gas','brennholz']],
+    ['Reinigung & Wäsche',['reinigung','wasch','wäsche','putz','spülmittel']],
+    ['Garten & Außenbereich',['garten','pflanze','rasen','erde']],
+    ['Versicherung',['versicherung','police','beitrag']],
+    ['Internet & Telefon',['telekom','vodafone','internet','telefon']],
+    ['Vermietungsplattform / Gebühren',['booking','airbnb','fewo','provision']],
+    ['Werbung & Website',['domain','hosting','werbung','website']],
+    ['Fahrt- / Reisekosten',['tankstelle','shell','aral','esso','bahn','parkgebühr']],
+    ['Anschaffung / Anlagegut',['fernseher','kühlschrank','spülmaschine','maschine','gerät']]
+   ];
+   for(let [c,ks] of rules)if(ks.some(k=>low.includes(k))){cat=c;break;}
+
+   if(date)$('date').value=date;
+   if(vendor)$('vendor').value=vendor;
+   if(gross!==null)$('gross').value=gross.toFixed(2).replace('.',',');
+   if(tax!==null)$('tax').value=tax.toFixed(2).replace('.',',');
+   $('type').value=cat;
+
+   let found=[date&&'Datum',vendor&&'Händler',gross!==null&&'Brutto',tax!==null&&'MwSt.'].filter(Boolean);
+   s.textContent=found.length?'✓ Erkannt: '+found.join(', ')+'. Unsichere Werte bleiben leer.':'⚠️ Keine ausreichend sicheren Belegdaten erkannt.';
+ }catch(e){
+   console.error(e);
+   s.textContent='⚠️ Erkennung nicht möglich: '+e.message;
+ }
+});let p=parseReceipt(r.data.text||'');if(p.date)$('date').value=p.date;if(p.vendor)$('vendor').value=p.vendor;if(p.gross)$('gross').value=p.gross;if(p.tax)$('tax').value=p.tax;$('type').value=p.cat;s.textContent='✓ Analyse fertig – Daten wurden automatisch eingetragen. Bitte kurz prüfen.'}catch(e){s.textContent='Erkennung nicht möglich: '+e.message}});
 async function load(){let {data,error}=await sb.from('documents').select('*').order('issue_date',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}docs=data||[];let vals=[...new Set(docs.map(x=>x.document_type).filter(Boolean))].sort();$('filter').innerHTML='<option value="">Alle Kategorien</option>'+vals.map(x=>'<option>'+esc(x)+'</option>').join('');render()}function shown(){let q=$('search').value.toLowerCase(),f=$('filter').value;return docs.filter(d=>(!f||d.document_type===f)&&(!q||[d.vendor,d.notes,d.file_name,d.document_type].some(x=>String(x||'').toLowerCase().includes(q))))}function render(){let a=shown();$('count').textContent=a.length;$('sum').textContent=money(a.reduce((s,d)=>s+Number(d.gross_amount||0),0));$('vat').textContent=money(a.reduce((s,d)=>s+Number(d.tax_amount||0),0));$('list').innerHTML=a.length?a.map(d=>`<div class="row"><div><h3>${esc(d.vendor||d.file_name)}</h3><div class="meta">${d.issue_date?new Date(d.issue_date+'T12:00').toLocaleDateString('de-DE'):'ohne Datum'} · ${esc(d.document_type)}<br>${esc(d.file_name)}${d.notes?'<br>'+esc(d.notes):''}</div></div><div><div class="amount">${d.gross_amount==null?'—':money(d.gross_amount)}</div><div class="actions"><button class="btn light mini" onclick="openFile('${d.id}')">Öffnen</button><button class="btn danger mini" onclick="del('${d.id}')">Löschen</button></div></div></div>`).join(''):'<div class="empty">Noch keine Belege.</div>'}$('search').oninput=render;$('filter').onchange=render;$('refresh').onclick=load;
 $('form').onsubmit=async e=>{e.preventDefault();let file=$('file').files[0];if(!file)return;$('save').disabled=true;try{let {data:{user}}=await sb.auth.getUser();let path=`${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;let u=await sb.storage.from('belege').upload(path,file,{contentType:file.type});if(u.error)throw u.error;let row={file_name:file.name,storage_path:path,document_type:$('type').value,issue_date:$('date').value||null,gross_amount:number($('gross').value),tax_amount:number($('tax').value),currency:'EUR',vendor:$('vendor').value||null,notes:$('notes').value||null};let r=await sb.from('documents').insert(row);if(r.error){await sb.storage.from('belege').remove([path]);throw r.error}$('form').reset();$('type').value='Sonstiger Beleg';$('scanstatus').classList.add('hidden');toast('Beleg gespeichert ✓');await load()}catch(x){toast('Fehler: '+x.message)}finally{$('save').disabled=false}}
 window.openFile=async id=>{let d=docs.find(x=>x.id===id);let {data,error}=await sb.storage.from('belege').createSignedUrl(d.storage_path,60);if(error)return toast(error.message);window.open(data.signedUrl,'_blank')};window.del=async id=>{let d=docs.find(x=>x.id===id);if(!confirm('Beleg wirklich löschen?'))return;let r=await sb.from('documents').delete().eq('id',id);if(r.error)return toast(r.error.message);await sb.storage.from('belege').remove([d.storage_path]);toast('Beleg gelöscht');load()};$('csv').onclick=()=>{let rows=[['Datum','Kategorie','Firma','Brutto EUR','MwSt EUR','Datei','Notiz'],...shown().map(d=>[d.issue_date||'',d.document_type||'',d.vendor||'',d.gross_amount??'',d.tax_amount??'',d.file_name||'',d.notes||''])];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let b=new Blob([csv],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='Buchs-und-Brise-Belege.csv';a.click();URL.revokeObjectURL(u)};

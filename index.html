@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123b31"><title>Buchs & Brise – Belegarchiv</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Arial;background:#f3f0e8;color:#17342d}header{background:#123b31;color:#fff;padding:32px 18px 52px}header div,.wrap{max-width:900px;margin:auto}h1{margin:4px 0;font-size:36px}.sub{opacity:.72}.wrap{padding:0 14px 60px;margin-top:-28px}.card{background:#fffdf8;border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 12px 32px #17342d18}.hidden{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.wide{grid-column:1/-1}label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;color:#72817c;margin:0 0 5px}input,select,textarea{width:100%;padding:13px;border:1px solid #dce4df;border-radius:13px;background:white;font:inherit}textarea{min-height:75px}.btn{border:0;border-radius:13px;padding:12px 15px;background:#174d40;color:#fff;font-weight:800}.light{background:#edf3f0;color:#174d40}.danger{background:#f8e9e7;color:#9c3535}.upload{border:2px dashed #a8bbb4;border-radius:17px;padding:17px;text-align:center;background:#f7faf8}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.stat{background:#eff4f1;padding:11px;border-radius:14px}.stat b{display:block}.stat small{color:#71817b}.toolbar{display:grid;grid-template-columns:1fr 190px;gap:8px}.row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:15px 0;border-top:1px solid #e1e6e3}.row h3{margin:0 0 4px;font-size:16px}.meta{font-size:13px;color:#71817b;line-height:1.45}.amount{font-weight:900;text-align:right}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}.mini{padding:7px 9px;font-size:12px}.empty{text-align:center;color:#71817b;padding:30px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#102e27;color:#fff;padding:11px 15px;border-radius:13px;max-width:90%;z-index:5}.login{max-width:450px;margin:0 auto}
+@media(max-width:620px){.grid,.toolbar{grid-template-columns:1fr}.wide{grid-column:auto}.row{grid-template-columns:1fr}.amount{text-align:left}}
+</style></head>
+<body>
+<header><div><small>FERIENHAUS · ALTES LAND</small><h1>Buchs & Brise</h1><div class="sub">Belegarchiv</div></div></header>
+<div class="wrap">
+<section id="login" class="card login"><h2>Anmelden</h2><div class="grid">
+<div class="wide"><label>E-Mail</label><input id="email" type="email"></div>
+<div class="wide"><label>Passwort</label><input id="password" type="password"></div>
+<button id="loginBtn" class="btn wide">Anmelden</button></div></section>
+<main id="app" class="hidden">
+<section class="card"><div class="top"><div><b>Neuen Beleg erfassen</b><div class="meta">Foto oder PDF direkt ins gemeinsame Archiv</div></div><button id="logout" class="btn light mini">Abmelden</button></div>
+<form id="form" class="grid" style="margin-top:15px">
+<div class="wide upload"><b>📷 Beleg fotografieren oder Datei auswählen</b><input id="file" type="file" accept="image/jpeg,image/png,application/pdf" required></div>
+<div><label>Belegdatum</label><input id="date" type="date"></div>
+<div><label>Kategorie</label><select id="type"><option>Einrichtung & Möbel</option><option>Reparatur & Instandhaltung</option><option>Strom / Wasser / Heizung</option><option>Reinigung & Wäsche</option><option>Garten & Außenbereich</option><option>Versicherung</option><option>Internet & Telefon</option><option>Vermietungsplattform / Gebühren</option><option>Werbung & Website</option><option>Fahrt- / Reisekosten</option><option>Anschaffung / Anlagegut</option><option selected>Sonstiger Beleg</option></select></div>
+<div><label>Firma / Händler</label><input id="vendor"></div>
+<div><label>Brutto €</label><input id="gross" inputmode="decimal" placeholder="0,00"></div>
+<div><label>MwSt. €</label><input id="tax" inputmode="decimal" placeholder="0,00"></div>
+<div class="wide"><label>Notiz</label><textarea id="notes"></textarea></div>
+<button id="save" class="btn wide">Beleg speichern</button></form></section>
+<section class="card"><div class="top"><div><b>Archiv</b><div class="meta">Gemeinsamer Datenbestand auf allen Handys</div></div><button id="refresh" class="btn light mini">↻</button></div>
+<div class="stats"><div class="stat"><b id="count">0</b><small>Belege</small></div><div class="stat"><b id="sum">0,00 €</b><small>Brutto</small></div><div class="stat"><b id="vat">0,00 €</b><small>MwSt.</small></div></div>
+<div class="toolbar"><input id="search" type="search" placeholder="🔎 Suchen …"><select id="filter"><option value="">Alle Kategorien</option></select></div>
+<div class="actions" style="margin:10px 0"><button id="csv" class="btn light mini">CSV exportieren</button></div><div id="list"></div></section>
+</main></div><div id="toast" class="toast hidden"></div>
+<script>
+const URL='https://gmcizmqvjowswqrlmkvn.supabase.co';
+const KEY='sb_publishable_q09PJmA-ikYZW0KU_O8e4A_neFLcXW2';
+const sb=supabase.createClient(URL,KEY); let docs=[]; const $=x=>document.getElementById(x);
+const money=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number(n||0));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const number=v=>{if(!v)return null;let n=Number(String(v).replace(/\./g,'').replace(',','.'));return isFinite(n)?n:null};
+function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
+function view(session){$('login').classList.toggle('hidden',!!session);$('app').classList.toggle('hidden',!session);if(session)load()}
+$('loginBtn').onclick=async()=>{let {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)toast(error.message)}
+$('logout').onclick=()=>sb.auth.signOut(); sb.auth.onAuthStateChange((e,s)=>view(s)); sb.auth.getSession().then(({data})=>view(data.session));
+async function load(){let {data,error}=await sb.from('documents').select('*').order('issue_date',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}docs=data||[];let vals=[...new Set(docs.map(x=>x.document_type).filter(Boolean))].sort();$('filter').innerHTML='<option value="">Alle Kategorien</option>'+vals.map(x=>'<option>'+esc(x)+'</option>').join('');render()}
+function shown(){let q=$('search').value.toLowerCase(),f=$('filter').value;return docs.filter(d=>(!f||d.document_type===f)&&(!q||[d.vendor,d.notes,d.file_name,d.document_type].some(x=>String(x||'').toLowerCase().includes(q))))}
+function render(){let a=shown();$('count').textContent=a.length;$('sum').textContent=money(a.reduce((s,d)=>s+Number(d.gross_amount||0),0));$('vat').textContent=money(a.reduce((s,d)=>s+Number(d.tax_amount||0),0));$('list').innerHTML=a.length?a.map(d=>`<div class="row"><div><h3>${esc(d.vendor||d.file_name)}</h3><div class="meta">${d.issue_date?new Date(d.issue_date+'T12:00').toLocaleDateString('de-DE'):'ohne Datum'} · ${esc(d.document_type)}<br>${esc(d.file_name)}${d.notes?'<br>'+esc(d.notes):''}</div></div><div><div class="amount">${d.gross_amount==null?'—':money(d.gross_amount)}</div><div class="actions"><button class="btn light mini" onclick="openFile('${d.id}')">Öffnen</button><button class="btn danger mini" onclick="del('${d.id}')">Löschen</button></div></div></div>`).join(''):'<div class="empty">Noch keine Belege.</div>'}
+$('search').oninput=render;$('filter').onchange=render;$('refresh').onclick=load;
+$('form').onsubmit=async e=>{e.preventDefault();let file=$('file').files[0];if(!file)return;$('save').disabled=true;try{let {data:{user}}=await sb.auth.getUser();let path=`${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;let u=await sb.storage.from('belege').upload(path,file,{contentType:file.type});if(u.error)throw u.error;let row={file_name:file.name,storage_path:path,document_type:$('type').value,issue_date:$('date').value||null,gross_amount:number($('gross').value),tax_amount:number($('tax').value),currency:'EUR',vendor:$('vendor').value||null,notes:$('notes').value||null};let r=await sb.from('documents').insert(row);if(r.error){await sb.storage.from('belege').remove([path]);throw r.error}$('form').reset();$('type').value='Sonstiger Beleg';toast('Beleg gespeichert ✓');await load()}catch(x){toast('Fehler: '+x.message)}finally{$('save').disabled=false}}
+window.openFile=async id=>{let d=docs.find(x=>x.id===id);let {data,error}=await sb.storage.from('belege').createSignedUrl(d.storage_path,60);if(error)return toast(error.message);window.open(data.signedUrl,'_blank')};
+window.del=async id=>{let d=docs.find(x=>x.id===id);if(!confirm('Beleg wirklich löschen?'))return;let r=await sb.from('documents').delete().eq('id',id);if(r.error)return toast(r.error.message);await sb.storage.from('belege').remove([d.storage_path]);toast('Beleg gelöscht');load()};
+$('csv').onclick=()=>{let rows=[['Datum','Kategorie','Firma','Brutto EUR','MwSt EUR','Datei','Notiz'],...shown().map(d=>[d.issue_date||'',d.document_type||'',d.vendor||'',d.gross_amount??'',d.tax_amount??'',d.file_name||'',d.notes||''])];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let b=new Blob([csv],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='Buchs-und-Brise-Belege.csv';a.click();URL.revokeObjectURL(u)}
+</script></body></html>

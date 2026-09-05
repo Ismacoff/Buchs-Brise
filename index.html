@@ -32,15 +32,40 @@
 <div class="actions" style="margin:10px 0"><button id="csv" class="btn light mini">CSV exportieren</button></div><div id="list"></div></section>
 </main></div><div id="toast" class="toast hidden"></div>
 <script>
-const URL='https://gmcizmqvjowswqrlmkvn.supabase.co';
-const KEY='sb_publishable_q09PJmA-ikYZW0KU_O8e4A_neFLcXW2';
-const sb=supabase.createClient(URL,KEY); let docs=[]; const $=x=>document.getElementById(x);
+const SUPABASE_URL='https://gmcizmqvjowswqrlmkvn.supabase.co';
+const SUPABASE_KEY='sb_publishable_q09PJmA-ikYZW0KU_O8e4A_neFLcXW2';
+let sb; let docs=[]; const $=x=>document.getElementById(x);
+try {
+  if (!window.supabase) throw new Error('Supabase-Bibliothek konnte nicht geladen werden.');
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+} catch (err) {
+  document.addEventListener('DOMContentLoaded',()=>{ const t=$('toast'); t.textContent='Startfehler: '+err.message; t.classList.remove('hidden'); });
+}
 const money=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number(n||0));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>{if(!v)return null;let n=Number(String(v).replace(/\./g,'').replace(',','.'));return isFinite(n)?n:null};
 function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),2800)}
 function view(session){$('login').classList.toggle('hidden',!!session);$('app').classList.toggle('hidden',!session);if(session)load()}
-$('loginBtn').onclick=async()=>{let {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)toast(error.message)}
+$('loginBtn').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  const btn=$('loginBtn');
+  const email=$('email').value.trim();
+  const password=$('password').value;
+  if(!email || !password){ toast('Bitte E-Mail und Passwort eingeben.'); return; }
+  if(!sb){ toast('Supabase wurde nicht geladen. Bitte Seite neu laden.'); return; }
+  btn.disabled=true; btn.textContent='Anmeldung läuft …';
+  try {
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error) throw error;
+    if(!data.session) throw new Error('Keine Sitzung erhalten.');
+    toast('Anmeldung erfolgreich ✓');
+    view(data.session);
+  } catch(err) {
+    toast('Anmeldung fehlgeschlagen: '+(err?.message||String(err)));
+  } finally {
+    btn.disabled=false; btn.textContent='Anmelden';
+  }
+});
 $('logout').onclick=()=>sb.auth.signOut(); sb.auth.onAuthStateChange((e,s)=>view(s)); sb.auth.getSession().then(({data})=>view(data.session));
 async function load(){let {data,error}=await sb.from('documents').select('*').order('issue_date',{ascending:false,nullsFirst:false}).order('created_at',{ascending:false});if(error){$('list').innerHTML='<div class="empty">'+esc(error.message)+'</div>';return}docs=data||[];let vals=[...new Set(docs.map(x=>x.document_type).filter(Boolean))].sort();$('filter').innerHTML='<option value="">Alle Kategorien</option>'+vals.map(x=>'<option>'+esc(x)+'</option>').join('');render()}
 function shown(){let q=$('search').value.toLowerCase(),f=$('filter').value;return docs.filter(d=>(!f||d.document_type===f)&&(!q||[d.vendor,d.notes,d.file_name,d.document_type].some(x=>String(x||'').toLowerCase().includes(q))))}
@@ -49,5 +74,5 @@ $('search').oninput=render;$('filter').onchange=render;$('refresh').onclick=load
 $('form').onsubmit=async e=>{e.preventDefault();let file=$('file').files[0];if(!file)return;$('save').disabled=true;try{let {data:{user}}=await sb.auth.getUser();let path=`${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;let u=await sb.storage.from('belege').upload(path,file,{contentType:file.type});if(u.error)throw u.error;let row={file_name:file.name,storage_path:path,document_type:$('type').value,issue_date:$('date').value||null,gross_amount:number($('gross').value),tax_amount:number($('tax').value),currency:'EUR',vendor:$('vendor').value||null,notes:$('notes').value||null};let r=await sb.from('documents').insert(row);if(r.error){await sb.storage.from('belege').remove([path]);throw r.error}$('form').reset();$('type').value='Sonstiger Beleg';toast('Beleg gespeichert ✓');await load()}catch(x){toast('Fehler: '+x.message)}finally{$('save').disabled=false}}
 window.openFile=async id=>{let d=docs.find(x=>x.id===id);let {data,error}=await sb.storage.from('belege').createSignedUrl(d.storage_path,60);if(error)return toast(error.message);window.open(data.signedUrl,'_blank')};
 window.del=async id=>{let d=docs.find(x=>x.id===id);if(!confirm('Beleg wirklich löschen?'))return;let r=await sb.from('documents').delete().eq('id',id);if(r.error)return toast(r.error.message);await sb.storage.from('belege').remove([d.storage_path]);toast('Beleg gelöscht');load()};
-$('csv').onclick=()=>{let rows=[['Datum','Kategorie','Firma','Brutto EUR','MwSt EUR','Datei','Notiz'],...shown().map(d=>[d.issue_date||'',d.document_type||'',d.vendor||'',d.gross_amount??'',d.tax_amount??'',d.file_name||'',d.notes||''])];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let b=new Blob([csv],{type:'text/csv'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='Buchs-und-Brise-Belege.csv';a.click();URL.revokeObjectURL(u)}
+$('csv').onclick=()=>{let rows=[['Datum','Kategorie','Firma','Brutto EUR','MwSt EUR','Datei','Notiz'],...shown().map(d=>[d.issue_date||'',d.document_type||'',d.vendor||'',d.gross_amount??'',d.tax_amount??'',d.file_name||'',d.notes||''])];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let b=new Blob([csv],{type:'text/csv'}),u=window.URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='Buchs-und-Brise-Belege.csv';a.click();window.URL.revokeObjectURL(u)}
 </script></body></html>
